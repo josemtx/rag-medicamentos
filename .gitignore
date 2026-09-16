@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+.claude/
+
+# Regenerable: data/raw se descarga de CIMA, chunks y embeddings se derivan de ahí.
+data/raw/*
+data/processed/*
+data/chunks/*
+!data/**/.gitkeep
+
+eval/_run.log
