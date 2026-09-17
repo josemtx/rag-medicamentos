@@ -15,19 +15,19 @@ def test_split_long_text_respects_max_chars():
 
 def test_chunk_document_splits_oversized_section():
     sections = [{"seccion": "1", "titulo": "T", "contenido": "<p>" + ("Palabra. " * 500) + "</p>"}]
-    chunks = chunk_document("123", "ficha_tecnica", sections, "MED X")
+    chunks = chunk_document("123", "ficha_tecnica", sections, "MED X", "IBUPROFENO 400 mg")
     assert len(chunks) > 1
     assert all(c["nregistro"] == "123" and c["doc_type"] == "ficha_tecnica" for c in chunks)
 
 
 def test_chunk_document_skips_empty_section():
     sections = [{"seccion": "1", "titulo": "T", "contenido": "<p></p>"}]
-    assert chunk_document("123", "prospecto", sections, "MED X") == []
+    assert chunk_document("123", "prospecto", sections, "MED X", "IBUPROFENO 400 mg") == []
 
 
 def test_chunk_document_skips_placeholder_section():
     sections = [{"seccion": "4", "titulo": "DATOS CLINICOS", "contenido": "<p>.</p>"}]
-    assert chunk_document("123", "ficha_tecnica", sections, "MED X") == []
+    assert chunk_document("123", "ficha_tecnica", sections, "MED X", "IBUPROFENO 400 mg") == []
 
 
 if __name__ == "__main__":

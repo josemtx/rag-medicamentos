@@ -72,7 +72,26 @@ def split_long_text(text: str, max_chars: int) -> list[str]:
     return chunks
 
 
-def chunk_document(nregistro: str, doc_type: str, sections: list[dict], med_nombre: str) -> list[dict]:
+def principios_activos(nregistro: str) -> str:
+    """Principios activos con dosis, p.ej. "PARACETAMOL 500 mg, IBUPROFENO 200 mg".
+
+    Las fichas técnicas hablan de "este medicamento" sin decir qué contiene. Al
+    trocearlas, un fragmento como "no tomar con medicamentos que contengan
+    ibuprofeno" se vuelve engañoso si no consta que el propio medicamento ya lo
+    lleva. Esto viaja con cada chunk para conservar el referente.
+    """
+    path = RAW_DIR / f"meta_{nregistro}.json"
+    if not path.exists():
+        return ""
+    meta = json.loads(path.read_text(encoding="utf-8"))
+    return ", ".join(
+        " ".join(filter(None, [p["nombre"], p.get("cantidad"), p.get("unidad")]))
+        for p in meta.get("principiosActivos", [])
+    )
+
+
+def chunk_document(nregistro: str, doc_type: str, sections: list[dict], med_nombre: str,
+                   activos: str) -> list[dict]:
     chunks = []
     for section in sections:
         text = html_to_text(section.get("contenido", ""))
@@ -83,6 +102,7 @@ def chunk_document(nregistro: str, doc_type: str, sections: list[dict], med_nomb
             chunks.append({
                 "nregistro": nregistro,
                 "medicamento": med_nombre,
+                "principios_activos": activos,
                 "doc_type": doc_type,
                 "seccion": section.get("seccion"),
                 "titulo": section.get("titulo"),
@@ -99,12 +119,15 @@ def main():
     all_chunks = []
     for med in medicamentos:
         nregistro = med["nregistro"]
+        activos = principios_activos(nregistro)
         for doc_type, prefix in (("ficha_tecnica", "ft"), ("prospecto", "prospecto")):
             path = RAW_DIR / f"{prefix}_{nregistro}.json"
             if not path.exists():
                 continue
             sections = json.loads(path.read_text(encoding="utf-8"))
-            all_chunks.extend(chunk_document(nregistro, doc_type, sections, med.get("nombre", "")))
+            all_chunks.extend(
+                chunk_document(nregistro, doc_type, sections, med.get("nombre", ""), activos)
+            )
 
     out_path = CHUNKS_DIR / "chunks.jsonl"
     with out_path.open("w", encoding="utf-8") as f:

@@ -1,0 +1,4 @@
+FROM C:/Users/josem/.ollama/imports/qwen2.5-7b-instruct-q4_k_m.gguf
+
+# El prompt RAG mete 5 chunks de hasta 2000 caracteres: no cabe en los 4096 por defecto.
+PARAMETER num_ctx 8192
